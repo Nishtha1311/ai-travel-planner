@@ -40,3 +40,35 @@ return {
   token,
 };
 };
+
+export const loginUser = async (userData) => {
+  const { email, password } = userData;
+
+  if (!email || !password) {
+    throw new Error("Email and password are required");
+  }
+
+  const user = await User.findOne({ email }).select("+password");
+
+  if (!user) {
+    throw new Error("Invalid email or password");
+  }
+
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordCorrect) {
+    throw new Error("Invalid email or password");
+  }
+
+  const token = generateToken(user._id);
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+    },
+    token,
+  };
+};
