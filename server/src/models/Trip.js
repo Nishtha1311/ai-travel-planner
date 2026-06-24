@@ -43,6 +43,7 @@ const tripSchema = new mongoose.Schema(
     travelStyle: {
       type: String,
       enum: [
+        "Balanced",
         "Adventure",
         "Luxury",
         "Family",
