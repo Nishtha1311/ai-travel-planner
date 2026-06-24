@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   CalendarDays,
   CircleDollarSign,
@@ -11,6 +12,8 @@ import {
   Hotel,
   LoaderCircle,
   MapPinned,
+  PencilLine,
+  RefreshCw,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -31,10 +34,13 @@ export default function TripDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const tripId = params.id;
+  const itinerarySectionRef = useRef(null);
 
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [aiUnavailable, setAiUnavailable] = useState(false);
+  const [aiErrorMessage, setAiErrorMessage] = useState("");
 
   const fetchTrip = async () => {
     try {
@@ -65,24 +71,49 @@ export default function TripDetailsPage() {
   const generateItinerary = async () => {
     try {
       setGenerating(true);
+      setAiUnavailable(false);
+      setAiErrorMessage("");
 
       await api.post(`/ai/generate-trip/${tripId}`);
 
       toast.success("Your AI itinerary is ready!");
       await fetchTrip();
     } catch (error) {
-  console.error(
-    "AI itinerary error:",
-    error?.response?.data || error.message
-  );
+      const status = error?.response?.status;
+      const message =
+        error?.response?.data?.message ||
+        "Could not generate the AI itinerary. Please try again.";
 
-  toast.error(
-    error?.response?.data?.message ||
-      "Could not generate the AI itinerary. Please try again."
-  );
-}finally {
+      console.error("AI itinerary error:", error?.response?.data || error.message);
+
+      const isAiUnavailable =
+        status === 429 ||
+        status === 503 ||
+        message.toLowerCase().includes("quota") ||
+        message.toLowerCase().includes("busy") ||
+        message.toLowerCase().includes("high demand");
+
+      if (isAiUnavailable) {
+        setAiUnavailable(true);
+        setAiErrorMessage(
+          "AI planning is temporarily unavailable because the Gemini service is busy or its free quota has been reached."
+        );
+        toast.error("AI is temporarily unavailable. You can still plan manually.");
+      } else {
+        toast.error(message);
+      }
+    } finally {
       setGenerating(false);
     }
+  };
+
+  const handleManualPlanning = () => {
+    itinerarySectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
+    toast.success("Manual itinerary editing will be available here.");
   };
 
   if (loading) {
@@ -188,7 +219,43 @@ export default function TripDetailsPage() {
           </div>
         </section>
 
-        <section className="trip-content-card">
+        {aiUnavailable && (
+          <section className="ai-unavailable-card">
+            <div className="ai-unavailable-icon">
+              <AlertCircle size={26} />
+            </div>
+
+            <div className="ai-unavailable-content">
+              <span className="section-label">AI TEMPORARILY UNAVAILABLE</span>
+              <h2>Your trip is saved — continue planning your way</h2>
+              <p>
+                {aiErrorMessage ||
+                  "The AI provider is temporarily unavailable. Your trip details are safe, and you can still build your itinerary manually."}
+              </p>
+
+              <div className="ai-unavailable-actions">
+                <button
+                  className="retry-ai-button"
+                  onClick={generateItinerary}
+                  disabled={generating}
+                >
+                  <RefreshCw size={18} />
+                  Try AI again
+                </button>
+
+                <button
+                  className="manual-plan-button"
+                  onClick={handleManualPlanning}
+                >
+                  <PencilLine size={18} />
+                  Build manually
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="trip-content-card" ref={itinerarySectionRef}>
           <div className="section-heading">
             <div>
               <span className="section-label">YOUR AI PLAN</span>
@@ -202,7 +269,8 @@ export default function TripDetailsPage() {
               <h3>Your itinerary is waiting</h3>
               <p>
                 Click “Generate AI itinerary” and TravelAI will create your
-                personalized day-wise plan.
+                personalized day-wise plan. If AI is unavailable, you can build
+                your trip manually.
               </p>
             </div>
           ) : (
@@ -259,7 +327,9 @@ export default function TripDetailsPage() {
                   <Hotel size={23} />
                   <h3>{hotel.name}</h3>
                   <p>{hotel.area || hotel.location}</p>
-                  <strong>{hotel.priceRange || hotel.price || "Price varies"}</strong>
+                  <strong>
+                    {hotel.priceRange || hotel.price || "Price varies"}
+                  </strong>
                   <span>{hotel.reason}</span>
                 </article>
               ))}
