@@ -7,6 +7,8 @@ import {
 } from "../services/trip.service.js";
 
 import { generateTripItinerary } from "../services/gemini.service.js";
+import Trip from "../models/Trip.js";
+
 
 export const createTrip = async (req, res) => {
   try {
@@ -122,6 +124,69 @@ export const generateItinerary = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to generate itinerary",
+    });
+  }
+};
+
+// PUT /api/trips/:id/manual-itinerary
+export const saveManualItinerary = async (req, res) => {
+  try {
+    const { itinerary } = req.body;
+
+    if (!Array.isArray(itinerary) || itinerary.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please add at least one itinerary day",
+      });
+    }
+
+    const trip = await Trip.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!trip) {
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found",
+      });
+    }
+
+    const cleanedItinerary = itinerary.map((day, index) => ({
+      day: Number(day.day) || index + 1,
+      title: day.title?.trim() || `Day ${index + 1}`,
+      activities: (day.activities || [])
+        .map((activity) =>
+          typeof activity === "string"
+            ? activity.trim()
+            : activity?.name?.trim() ||
+              activity?.description?.trim() ||
+              ""
+        )
+        .filter(Boolean),
+    }));
+
+    // Save in the field that exists in your Trip model.
+    trip.generatedItinerary = {
+      dailyItinerary: cleanedItinerary,
+      source: "manual",
+    };
+
+    trip.status = "manual";
+
+    await trip.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Manual itinerary saved successfully",
+      data: trip,
+    });
+  } catch (error) {
+    console.error("Save manual itinerary error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Could not save manual itinerary",
     });
   }
 };

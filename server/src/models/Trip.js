@@ -31,7 +31,7 @@ const tripSchema = new mongoose.Schema(
 
     budget: {
       type: String,
-      enum: ["Low", "Medium", "High"],
+      enum: ["Low", "Medium", "High","Luxury"],
       required: true,
     },
 
@@ -68,8 +68,8 @@ const tripSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "generated"],
-      default: "pending",
+      enum: ["planning", "generated","manual"],
+      default: "planning",
     },
 
     generatedItinerary: {

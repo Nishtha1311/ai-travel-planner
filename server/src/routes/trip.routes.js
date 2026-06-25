@@ -6,6 +6,7 @@ import {
   updateTrip,
   deleteTrip,
   generateItinerary,
+  saveManualItinerary
 } from "../controllers/trip.controller.js";
 
 import protect from "../middleware/auth.middleware.js";
@@ -18,6 +19,7 @@ router.post("/", createTrip);
 router.get("/", getTrips);
 
 router.post("/:id/generate-itinerary", generateItinerary);
+router.put("/:id/manual-itinerary", saveManualItinerary);
 
 router.get("/:id", getTripById);
 router.put("/:id", updateTrip);
