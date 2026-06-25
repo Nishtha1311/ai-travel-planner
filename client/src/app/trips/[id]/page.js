@@ -44,6 +44,8 @@ export default function TripDetailsPage() {
   const [generating, setGenerating] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState(false);
   const [aiErrorMessage, setAiErrorMessage] = useState("");
+  const [regeneratingDay, setRegeneratingDay] = useState(null);
+const [dayInstruction, setDayInstruction] = useState({});
 
   const [manualMode, setManualMode] = useState(false);
 const [savingManualPlan, setSavingManualPlan] = useState(false);
@@ -284,6 +286,50 @@ const saveManualItinerary = async () => {
     );
   } finally {
     setSavingManualPlan(false);
+  }
+};
+
+const regenerateDay = async (dayNumber) => {
+  try {
+    setRegeneratingDay(dayNumber);
+
+    const response = await api.post(
+      `/ai/regenerate-day/${tripId}/${dayNumber}`,
+      {
+        instruction: dayInstruction[dayNumber] || "",
+      }
+    );
+
+    setTrip(response.data.data);
+
+    setDayInstruction((currentInstructions) => ({
+      ...currentInstructions,
+      [dayNumber]: "",
+    }));
+
+    toast.success(`Day ${dayNumber} regenerated successfully!`);
+  } catch (error) {
+    const status = error?.response?.status;
+    const message =
+      error?.response?.data?.message ||
+      "Could not regenerate this day. Please try again.";
+
+    console.error("Regenerate day error:", error?.response?.data || error.message);
+
+    const isAiUnavailable =
+      status === 429 ||
+      status === 503 ||
+      message.toLowerCase().includes("quota") ||
+      message.toLowerCase().includes("busy") ||
+      message.toLowerCase().includes("high demand");
+
+    if (isAiUnavailable) {
+      toast.error("AI is unavailable right now. You can edit this day manually.");
+    } else {
+      toast.error(message);
+    }
+  } finally {
+    setRegeneratingDay(null);
   }
 };
 
@@ -642,30 +688,65 @@ const formatCurrency = (amount) => {
   <div className="itinerary-list">
     {itinerary.map((day, index) => (
       <article className="itinerary-day-card" key={index}>
-        <div className="day-number">Day {day.day || index + 1}</div>
+  <div className="day-number">Day {day.day || index + 1}</div>
 
-        <div>
-          <h3>{day.title || day.theme || `Day ${index + 1}`}</h3>
+  <div className="itinerary-day-content">
+    <div className="itinerary-day-heading">
+      <h3>{day.title || day.theme || `Day ${index + 1}`}</h3>
 
-          {day.activities?.length > 0 ? (
-            <ul>
-              {day.activities.map((activity, activityIndex) => (
-                <li key={activityIndex}>
-                  {typeof activity === "string"
-                    ? activity
-                    : activity.name || activity.description}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>
-              {day.description ||
-                day.plan ||
-                "Your personalized activities will appear here."}
-            </p>
-          )}
-        </div>
-      </article>
+      <button
+        type="button"
+        className="regenerate-day-button"
+        onClick={() => regenerateDay(day.day || index + 1)}
+        disabled={regeneratingDay === (day.day || index + 1)}
+      >
+        {regeneratingDay === (day.day || index + 1) ? (
+          <>
+            <LoaderCircle className="spin" size={16} />
+            Regenerating...
+          </>
+        ) : (
+          <>
+            <RefreshCw size={16} />
+            Regenerate day
+          </>
+        )}
+      </button>
+    </div>
+
+    <input
+      type="text"
+      className="day-instruction-input"
+      value={dayInstruction[day.day || index + 1] || ""}
+      onChange={(event) =>
+        setDayInstruction((currentInstructions) => ({
+          ...currentInstructions,
+          [day.day || index + 1]: event.target.value,
+        }))
+      }
+      placeholder="Optional: e.g. Make this day more food-focused"
+      disabled={regeneratingDay === (day.day || index + 1)}
+    />
+
+    {day.activities?.length > 0 ? (
+      <ul>
+        {day.activities.map((activity, activityIndex) => (
+          <li key={activityIndex}>
+            {typeof activity === "string"
+              ? activity
+              : activity.name || activity.description}
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p>
+        {day.description ||
+          day.plan ||
+          "Your personalized activities will appear here."}
+      </p>
+    )}
+  </div>
+</article>
     ))}
   </div>
 )}

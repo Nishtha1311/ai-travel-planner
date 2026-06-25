@@ -2,15 +2,21 @@ import express from "express";
 import {
   testGeminiConnection,
   generateTripItinerary,
+  regenerateTripDay,
 } from "../controllers/ai.controller.js";
-import  protect  from "../middleware/auth.middleware.js";
+import protect from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Test Gemini API connection
 router.get("/test", testGeminiConnection);
 
-// Generate AI itinerary for one trip
 router.post("/generate-trip/:tripId", protect, generateTripItinerary);
+
+// Regenerate only one itinerary day
+router.post(
+  "/regenerate-day/:tripId/:dayNumber",
+  protect,
+  regenerateTripDay
+);
 
 export default router;
