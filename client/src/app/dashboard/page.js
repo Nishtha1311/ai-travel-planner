@@ -205,68 +205,80 @@ const deleteTrip = async () => {
             </div>
           ) : (
            <div className="trip-grid">
-  {trips.map((trip) => (
-    <article className="dashboard-trip-card" key={trip._id}>
-      <div className="trip-card-top">
-        <span className={`trip-status ${trip.status}`}>
-          {trip.status === "generated"
-            ? "AI itinerary ready"
-            : trip.status === "manual"
-            ? "Manual plan"
-            : "Planning"}
-        </span>
+ {trips.map((trip) => (
+  <Link
+    href={`/trips/${trip._id}`}
+    key={trip._id}
+    className="dashboard-trip-card"
+  >
+    <div className="trip-card-accent" />
 
-        <div className="trip-card-actions">
-          <Link
-            href={`/trips/${trip._id}`}
-            className="open-trip-button"
-            aria-label={`Open trip to ${trip.destination}`}
-            title="Open trip"
-          >
-            <ChevronRight size={20} />
-          </Link>
+    <div className="trip-card-top">
+      <span className={`trip-status ${trip.status}`}>
+        {trip.status === "generated"
+          ? "AI itinerary ready"
+          : trip.status === "manual"
+          ? "Manual plan"
+          : "Planning"}
+      </span>
 
-          <button
-            type="button"
-            className="delete-trip-button"
-            onClick={(event) => openDeleteModal(trip, event)}
-            aria-label={`Delete trip to ${trip.destination}`}
-            title="Delete trip"
-          >
-            <Trash2 size={17} />
-          </button>
-        </div>
+      <div className="trip-card-actions">
+        <ChevronRight size={20} className="trip-open-icon" />
+
+        <button
+          type="button"
+          className="trip-delete-button"
+          onClick={(event) => deleteTrip(trip._id, event)}
+          aria-label={`Delete ${trip.destination} trip`}
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+    </div>
+
+    <div className="trip-destination-row">
+      <div className="trip-destination-icon">
+        <MapPinned size={22} />
       </div>
 
-      <Link
-        href={`/trips/${trip._id}`}
-        className="dashboard-trip-card-content"
-      >
+      <div>
+        <p className="trip-destination-label">DESTINATION</p>
         <h3>{trip.destination}</h3>
+      </div>
+    </div>
 
-        <div className="trip-card-meta">
-          <span>
-            <CalendarDays size={16} />
-            {trip.numberOfDays} days
-          </span>
+    <div className="trip-card-meta">
+      <span>
+        <CalendarDays size={16} />
+        {trip.numberOfDays} days
+      </span>
 
-          <span>
-            <Users size={16} />
-            {trip.travelers} travelers
-          </span>
+      <span>
+        <Users size={16} />
+        {trip.travelers} traveler{trip.travelers === 1 ? "" : "s"}
+      </span>
 
-          <span>
-            <CircleDollarSign size={16} />
-            {trip.budget}
-          </span>
-        </div>
+      <span>
+        <CircleDollarSign size={16} />
+        {trip.budget}
+      </span>
+    </div>
 
-        <p>
-          {trip.travelStyle} travel • {trip.interests?.join(", ")}
-        </p>
-      </Link>
-    </article>
-  ))}
+    <div className="trip-card-footer">
+      <span>
+        <Compass size={16} />
+        {trip.travelStyle} travel
+      </span>
+
+      <span className="trip-interests">
+        {trip.interests?.slice(0, 2).join(" • ")}
+{trip.interests?.length > 2
+  ? ` +${trip.interests.length - 2}`
+  : ""}
+      </span>
+    </div>
+  </Link>
+))}
 </div>
           )}
         </section>

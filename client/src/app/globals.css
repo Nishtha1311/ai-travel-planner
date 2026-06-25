@@ -655,72 +655,191 @@ select {
 }
 
 .dashboard-trip-card {
-  display: block;
-  padding: 19px;
-  border: 1px solid #e9e8f2;
-  border-radius: 15px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 250px;
+  padding: 22px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
   background: #ffffff;
-  transition: 0.2s ease;
+  border: 1px solid #e7e5ff;
+  border-radius: 22px;
+  box-shadow: 0 10px 26px rgba(75, 56, 189, 0.06);
+  transition: transform 0.22s ease, box-shadow 0.22s ease,
+    border-color 0.22s ease;
 }
 
 .dashboard-trip-card:hover {
-  color: inherit;
-  border-color: #cfc9ff;
-  box-shadow: 0 10px 28px rgba(50, 40, 130, 0.1);
-  transform: translateY(-3px);
+  transform: translateY(-6px);
+  border-color: #b8adff;
+  box-shadow: 0 18px 36px rgba(75, 56, 189, 0.14);
+}
+
+.trip-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, #5b43e8, #8c7cff);
 }
 
 .trip-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #8a85a3;
+  gap: 12px;
+}
+
+.trip-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trip-open-icon {
+  color: #6553e8;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-trip-card:hover .trip-open-icon {
+  transform: translateX(4px);
 }
 
 .trip-status {
-  padding: 6px 9px;
-  border-radius: 99px;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
+.trip-status.planning {
+  color: #a66300;
+  background: #fff3db;
+}
+
 .trip-status.generated {
-  color: #16794b;
-  background: #e9fbf0;
+  color: #4d37c9;
+  background: #eeeaff;
 }
 
-.trip-status.pending {
-  color: #a36305;
-  background: #fff4df;
+.trip-status.manual {
+  color: #176c50;
+  background: #dcf8eb;
 }
 
-.dashboard-trip-card h3 {
-  margin: 18px 0 14px;
-  font-size: 22px;
+.trip-delete-button {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  color: #ef4444;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 11px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.trip-delete-button:hover {
+  background: #fff1f2;
+  transform: scale(1.06);
+}
+
+.trip-destination-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trip-destination-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  color: #5b43e8;
+  background: #efedff;
+  border-radius: 14px;
+}
+
+.trip-destination-label {
+  margin: 0 0 4px;
+  color: #8a83aa;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.trip-destination-row h3 {
+  margin: 0;
+  color: #14213d;
+  font-size: 1.45rem;
+  text-transform: capitalize;
 }
 
 .trip-card-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  padding: 13px 0;
+  border-top: 1px solid #f0eff8;
+  border-bottom: 1px solid #f0eff8;
 }
 
-.trip-card-meta span {
+.trip-card-meta span,
+.trip-card-footer span {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: #667085;
-  font-size: 13px;
-  font-weight: 700;
+  gap: 6px;
+  color: #61708c;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
-.dashboard-trip-card > p {
-  margin: 16px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
+.trip-card-meta svg,
+.trip-card-footer svg {
+  color: #6a58e8;
 }
 
+.trip-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trip-interests {
+  max-width: 150px;
+  overflow: hidden;
+  color: #7b7596 !important;
+  font-size: 0.82rem !important;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .dashboard-trip-card {
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .trip-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .trip-interests {
+    max-width: 100%;
+    text-align: left;
+  }
+}
 @media (max-width: 850px) {
   .dashboard-page {
     grid-template-columns: 1fr;
