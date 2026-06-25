@@ -132,6 +132,40 @@ const [manualItinerary, setManualItinerary] = useState([
   }, 100);
 };
 
+const handleEditItinerary = () => {
+  const editablePlan = itinerary.map((day, index) => ({
+    day: day.day || index + 1,
+    title: day.title || day.theme || "",
+    activities:
+      day.activities?.map((activity) =>
+        typeof activity === "string"
+          ? activity
+          : activity.name || activity.description || ""
+      ) || [""],
+  }));
+
+  setManualItinerary(
+    editablePlan.length > 0
+      ? editablePlan
+      : [
+          {
+            day: 1,
+            title: "",
+            activities: [""],
+          },
+        ]
+  );
+
+  setManualMode(true);
+
+  setTimeout(() => {
+    itinerarySectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 100);
+};
+
 const updateManualDay = (dayIndex, field, value) => {
   setManualItinerary((currentPlan) =>
     currentPlan.map((day, index) =>
@@ -466,11 +500,22 @@ const formatCurrency = (amount) => {
 
         <section className="trip-content-card" ref={itinerarySectionRef}>
           <div className="section-heading">
-            <div>
-              <span className="section-label">YOUR AI PLAN</span>
-              <h2>Day-by-day itinerary</h2>
-            </div>
-          </div>
+  <div>
+    <span className="section-label">YOUR AI PLAN</span>
+    <h2>Day-by-day itinerary</h2>
+  </div>
+
+  {!manualMode && itinerary.length > 0 && (
+    <button
+      type="button"
+      className="edit-itinerary-button"
+      onClick={handleEditItinerary}
+    >
+      <PencilLine size={17} />
+      Edit itinerary
+    </button>
+  )}
+</div>
 
          {manualMode ? (
   <div className="manual-itinerary-builder">
