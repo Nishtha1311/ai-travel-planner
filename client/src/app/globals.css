@@ -2003,3 +2003,442 @@ select {
     width: 100%;
   }
 }
+
+/* Manual itinerary builder */
+
+.manual-itinerary-builder {
+  display: grid;
+  gap: 22px;
+}
+
+.manual-builder-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #ece9f5;
+}
+
+.manual-builder-top h3 {
+  margin: 7px 0 6px;
+  color: #25223a;
+  font-size: 1.35rem;
+}
+
+.manual-builder-top p {
+  margin: 0;
+  color: #77748a;
+}
+
+.manual-cancel-button,
+.add-day-button,
+.add-activity-button,
+.save-manual-button,
+.icon-delete-button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.manual-cancel-button {
+  padding: 10px 15px;
+  border: 1px solid #dedbea;
+  border-radius: 10px;
+  color: #5c5871;
+  background: white;
+  font-weight: 700;
+}
+
+.manual-days-list {
+  display: grid;
+  gap: 18px;
+}
+
+.manual-day-card {
+  padding: 20px;
+  border: 1px solid #e7e2f0;
+  border-radius: 18px;
+  background: #fcfbff;
+}
+
+.manual-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 17px;
+}
+
+.manual-day-card label {
+  display: block;
+  margin: 15px 0 7px;
+  color: #49445e;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.manual-day-card input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ded9e9;
+  border-radius: 11px;
+  outline: none;
+  color: #29243b;
+  background: white;
+  font: inherit;
+}
+
+.manual-day-card input:focus {
+  border-color: #6f58d9;
+  box-shadow: 0 0 0 3px rgba(111, 88, 217, 0.12);
+}
+
+.manual-activity-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.icon-delete-button {
+  width: 43px;
+  min-width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #f0cfd3;
+  border-radius: 11px;
+  color: #c54d5a;
+  background: #fff8f8;
+}
+
+.add-activity-button,
+.add-day-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 13px;
+  border: 1px dashed #a99add;
+  border-radius: 10px;
+  color: #5f48ca;
+  background: #faf8ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.manual-builder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.save-manual-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 11px;
+  color: white;
+  background: #5b43dd;
+  font-weight: 800;
+}
+
+.save-manual-button:disabled,
+.manual-cancel-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 650px) {
+  .manual-builder-top {
+    flex-direction: column;
+  }
+
+  .manual-cancel-button,
+  .add-day-button,
+  .save-manual-button {
+    width: 100%;
+  }
+
+  .manual-builder-actions {
+    flex-direction: column;
+  }
+}
+
+.dashboard-trip-card {
+  position: relative;
+}
+
+.trip-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.open-trip-button,
+.delete-trip-button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+}
+
+.open-trip-button {
+  color: #6554f5;
+  text-decoration: none;
+}
+
+.open-trip-button:hover {
+  background: #f0edff;
+}
+
+.delete-trip-button {
+  border: 1px solid #ffd1d1;
+  background: #ffffff;
+  color: #e14a4a;
+  cursor: pointer;
+}
+
+.delete-trip-button:hover {
+  background: #fff3f3;
+}
+
+.dashboard-trip-card-content {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(18, 24, 46, 0.42);
+  backdrop-filter: blur(5px);
+}
+
+.delete-modal {
+  position: relative;
+  width: min(100%, 430px);
+  padding: 34px;
+  border: 1px solid #ece8ff;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(32, 25, 77, 0.22);
+  text-align: center;
+  animation: deleteModalEnter 0.2s ease-out;
+}
+
+@keyframes deleteModalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.delete-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #77728e;
+  cursor: pointer;
+}
+
+.delete-modal-close:hover {
+  background: #f5f3ff;
+  color: #2c254f;
+}
+
+.delete-modal-icon {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #fff0f0;
+  color: #e24d4d;
+}
+
+.delete-modal h2 {
+  margin: 0;
+  color: #17152c;
+  font-size: 25px;
+}
+
+.delete-modal p {
+  margin: 13px 0 6px;
+  color: #5f5b76;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.delete-modal > span {
+  color: #a14b4b;
+  font-size: 14px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 27px;
+}
+
+.cancel-delete-button,
+.confirm-delete-button {
+  flex: 1;
+  min-height: 45px;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancel-delete-button {
+  border: 1px solid #ded9f2;
+  background: #ffffff;
+  color: #4e476d;
+}
+
+.cancel-delete-button:hover {
+  background: #f7f5ff;
+}
+
+.confirm-delete-button {
+  border: 1px solid #df4d4d;
+  background: #df4d4d;
+  color: #ffffff;
+}
+
+.confirm-delete-button:hover {
+  background: #c93d3d;
+}
+
+.cancel-delete-button:disabled,
+.confirm-delete-button:disabled,
+.delete-modal-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 480px) {
+  .delete-modal {
+    padding: 30px 22px 22px;
+  }
+
+  .delete-modal-actions {
+    flex-direction: column-reverse;
+  }
+}
+.budget-breakdown-card {
+  overflow: hidden;
+}
+
+.budget-total-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f1efff, #faf9ff);
+}
+
+.budget-total-banner span,
+.budget-item span,
+.budget-estimate-note {
+  color: #746f8d;
+  font-size: 14px;
+}
+
+.budget-total-banner strong {
+  display: block;
+  margin-top: 5px;
+  color: #2c2554;
+  font-size: 28px;
+}
+
+.budget-per-person {
+  min-width: 130px;
+  padding-left: 20px;
+  border-left: 1px solid #dcd7f7;
+}
+
+.budget-per-person strong {
+  font-size: 19px;
+}
+
+.budget-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.budget-item {
+  padding: 17px;
+  border: 1px solid #ebe8f7;
+  border-radius: 15px;
+  background: #ffffff;
+}
+
+.budget-item strong {
+  display: block;
+  margin-top: 7px;
+  color: #322b5d;
+  font-size: 17px;
+}
+
+.budget-estimate-note {
+  margin: 18px 0 0;
+  line-height: 1.55;
+}
+
+@media (max-width: 800px) {
+  .budget-breakdown-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .budget-total-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .budget-per-person {
+    width: 100%;
+    min-width: 0;
+    padding-top: 14px;
+    padding-left: 0;
+    border-top: 1px solid #dcd7f7;
+    border-left: none;
+  }
+
+  .budget-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}

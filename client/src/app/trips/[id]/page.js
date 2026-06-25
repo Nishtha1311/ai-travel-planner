@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  AlertCircle,
+   AlertCircle,
   ArrowLeft,
   CalendarDays,
   CircleDollarSign,
@@ -14,7 +14,10 @@ import {
   MapPinned,
   PencilLine,
   RefreshCw,
+  Save,
   Sparkles,
+  Trash2,
+  Plus,
   Users,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -41,6 +44,17 @@ export default function TripDetailsPage() {
   const [generating, setGenerating] = useState(false);
   const [aiUnavailable, setAiUnavailable] = useState(false);
   const [aiErrorMessage, setAiErrorMessage] = useState("");
+
+  const [manualMode, setManualMode] = useState(false);
+const [savingManualPlan, setSavingManualPlan] = useState(false);
+
+const [manualItinerary, setManualItinerary] = useState([
+  {
+    day: 1,
+    title: "",
+    activities: [""],
+  },
+]);
 
   const fetchTrip = async () => {
     try {
@@ -107,30 +121,170 @@ export default function TripDetailsPage() {
     }
   };
 
-  const handleManualPlanning = () => {
+ const handleManualPlanning = () => {
+  setManualMode(true);
+
+  setTimeout(() => {
     itinerarySectionRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+  }, 100);
+};
 
-    toast.success("Manual itinerary editing will be available here.");
-  };
+const updateManualDay = (dayIndex, field, value) => {
+  setManualItinerary((currentPlan) =>
+    currentPlan.map((day, index) =>
+      index === dayIndex ? { ...day, [field]: value } : day
+    )
+  );
+};
 
-  if (loading) {
-    return (
-      <main className="trip-details-loading">
-        <LoaderCircle className="spin" size={34} />
-        <p>Loading your trip...</p>
-      </main>
-    );
+const updateActivity = (dayIndex, activityIndex, value) => {
+  setManualItinerary((currentPlan) =>
+    currentPlan.map((day, index) => {
+      if (index !== dayIndex) return day;
+
+      const updatedActivities = [...day.activities];
+      updatedActivities[activityIndex] = value;
+
+      return { ...day, activities: updatedActivities };
+    })
+  );
+};
+
+const addActivity = (dayIndex) => {
+  setManualItinerary((currentPlan) =>
+    currentPlan.map((day, index) =>
+      index === dayIndex
+        ? { ...day, activities: [...day.activities, ""] }
+        : day
+    )
+  );
+};
+
+const removeActivity = (dayIndex, activityIndex) => {
+  setManualItinerary((currentPlan) =>
+    currentPlan.map((day, index) => {
+      if (index !== dayIndex) return day;
+
+      const updatedActivities = day.activities.filter(
+        (_, index) => index !== activityIndex
+      );
+
+      return {
+        ...day,
+        activities: updatedActivities.length ? updatedActivities : [""],
+      };
+    })
+  );
+};
+
+const addManualDay = () => {
+  setManualItinerary((currentPlan) => [
+    ...currentPlan,
+    {
+      day: currentPlan.length + 1,
+      title: "",
+      activities: [""],
+    },
+  ]);
+};
+
+const removeManualDay = (dayIndex) => {
+  setManualItinerary((currentPlan) => {
+    if (currentPlan.length === 1) {
+      toast.error("Your itinerary needs at least one day");
+      return currentPlan;
+    }
+
+    return currentPlan
+      .filter((_, index) => index !== dayIndex)
+      .map((day, index) => ({
+        ...day,
+        day: index + 1,
+      }));
+  });
+};
+
+const saveManualItinerary = async () => {
+  const cleanedItinerary = manualItinerary
+    .map((day, index) => ({
+      day: index + 1,
+      title: day.title.trim() || `Day ${index + 1}`,
+      activities: day.activities
+        .map((activity) => activity.trim())
+        .filter(Boolean),
+    }))
+    .filter((day) => day.title || day.activities.length > 0);
+
+  const hasAtLeastOneActivity = cleanedItinerary.some(
+    (day) => day.activities.length > 0
+  );
+
+  if (!hasAtLeastOneActivity) {
+    toast.error("Add at least one activity before saving");
+    return;
   }
+
+  try {
+    setSavingManualPlan(true);
+
+    const response = await api.put(`/trips/${tripId}/manual-itinerary`, {
+      itinerary: cleanedItinerary,
+    });
+
+    setTrip(response.data.data);
+    setManualMode(false);
+    setAiUnavailable(false);
+
+    toast.success("Manual itinerary saved successfully!");
+  } catch (error) {
+    console.error(
+      "Manual itinerary error:",
+      error?.response?.data || error.message
+    );
+
+    toast.error(
+      error?.response?.data?.message || "Could not save manual itinerary"
+    );
+  } finally {
+    setSavingManualPlan(false);
+  }
+};
+
+if (loading) {
+  return (
+    <main className="trip-details-loading">
+      <LoaderCircle className="spin" size={34} />
+      <p>Loading your trip...</p>
+    </main>
+  );
+}
 
   if (!trip) {
     return null;
   }
 
-  const itinerary = trip.itinerary || trip.aiItinerary || [];
+  const itinerary =
+  trip.generatedItinerary?.dailyItinerary ||
+  trip.itinerary ||
+  trip.aiItinerary ||
+  [];
   const hotels = trip.hotelRecommendations || [];
+
+  const estimatedBudget = trip.estimatedBudget || {};
+const hasBudgetEstimate = Object.keys(estimatedBudget).length > 0;
+
+const formatCurrency = (amount) => {
+  if (typeof amount !== "number") return "Not available";
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: estimatedBudget.currency || "INR",
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
 
   return (
     <main className="trip-details-page">
@@ -219,6 +373,61 @@ export default function TripDetailsPage() {
           </div>
         </section>
 
+        <section className="trip-content-card budget-breakdown-card">
+  <div className="section-heading">
+    <div>
+      <span className="section-label">TRIP COST ESTIMATE</span>
+      <h2>Budget breakdown</h2>
+    </div>
+
+    <CircleDollarSign size={25} />
+  </div>
+
+  {hasBudgetEstimate ? (
+    <>
+      <div className="budget-total-banner">
+        <div>
+          <span>Estimated total for this trip</span>
+          <strong>{formatCurrency(estimatedBudget.total)}</strong>
+        </div>
+
+        <div className="budget-per-person">
+          <span>Per traveler</span>
+          <strong>{formatCurrency(estimatedBudget.perTraveler)}</strong>
+        </div>
+      </div>
+
+      <div className="budget-breakdown-grid">
+        <article className="budget-item">
+          <span>Transport</span>
+          <strong>{formatCurrency(estimatedBudget.transport)}</strong>
+        </article>
+
+        <article className="budget-item">
+          <span>Accommodation</span>
+          <strong>{formatCurrency(estimatedBudget.accommodation)}</strong>
+        </article>
+
+        <article className="budget-item">
+          <span>Food</span>
+          <strong>{formatCurrency(estimatedBudget.food)}</strong>
+        </article>
+
+        <article className="budget-item">
+          <span>Activities</span>
+          <strong>{formatCurrency(estimatedBudget.activities)}</strong>
+        </article>
+      </div>
+
+      <p className="budget-estimate-note">{estimatedBudget.note}</p>
+    </>
+  ) : (
+    <p className="empty-section-text">
+      Your budget estimate will appear when you create a new trip.
+    </p>
+  )}
+</section>
+
         {aiUnavailable && (
           <section className="ai-unavailable-card">
             <div className="ai-unavailable-icon">
@@ -263,48 +472,159 @@ export default function TripDetailsPage() {
             </div>
           </div>
 
-          {itinerary.length === 0 ? (
-            <div className="empty-itinerary">
-              <Sparkles size={34} />
-              <h3>Your itinerary is waiting</h3>
-              <p>
-                Click “Generate AI itinerary” and TravelAI will create your
-                personalized day-wise plan. If AI is unavailable, you can build
-                your trip manually.
-              </p>
+         {manualMode ? (
+  <div className="manual-itinerary-builder">
+    <div className="manual-builder-top">
+      <div>
+        <span className="section-label">MANUAL PLANNING</span>
+        <h3>Create your own day-wise itinerary</h3>
+        <p>Add activities for each day and save your travel plan.</p>
+      </div>
+
+      <button
+        type="button"
+        className="manual-cancel-button"
+        onClick={() => setManualMode(false)}
+        disabled={savingManualPlan}
+      >
+        Cancel
+      </button>
+    </div>
+
+    <div className="manual-days-list">
+      {manualItinerary.map((day, dayIndex) => (
+        <div className="manual-day-card" key={dayIndex}>
+          <div className="manual-day-header">
+            <div className="day-number">Day {dayIndex + 1}</div>
+
+            <button
+              type="button"
+              className="icon-delete-button"
+              onClick={() => removeManualDay(dayIndex)}
+              title="Remove day"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
+
+          <label>Day title</label>
+          <input
+            type="text"
+            value={day.title}
+            onChange={(event) =>
+              updateManualDay(dayIndex, "title", event.target.value)
+            }
+            placeholder={`Example: Explore ${trip.destination}`}
+          />
+
+          <label>Activities</label>
+
+          {day.activities.map((activity, activityIndex) => (
+            <div className="manual-activity-row" key={activityIndex}>
+              <input
+                type="text"
+                value={activity}
+                onChange={(event) =>
+                  updateActivity(dayIndex, activityIndex, event.target.value)
+                }
+                placeholder="Example: Visit City Palace in the morning"
+              />
+
+              <button
+                type="button"
+                className="icon-delete-button"
+                onClick={() => removeActivity(dayIndex, activityIndex)}
+                title="Remove activity"
+              >
+                <Trash2 size={17} />
+              </button>
             </div>
-          ) : (
-            <div className="itinerary-list">
-              {itinerary.map((day, index) => (
-                <article className="itinerary-day-card" key={index}>
-                  <div className="day-number">Day {day.day || index + 1}</div>
+          ))}
 
-                  <div>
-                    <h3>{day.title || day.theme || `Day ${index + 1}`}</h3>
+          <button
+            type="button"
+            className="add-activity-button"
+            onClick={() => addActivity(dayIndex)}
+          >
+            <Plus size={17} />
+            Add activity
+          </button>
+        </div>
+      ))}
+    </div>
 
-                    {day.activities?.length > 0 ? (
-                      <ul>
-                        {day.activities.map((activity, activityIndex) => (
-                          <li key={activityIndex}>
-                            {typeof activity === "string"
-                              ? activity
-                              : activity.name || activity.description}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>
-                        {day.description ||
-                          day.plan ||
-                          "Your personalized activities will appear here."}
-                      </p>
-                    )}
-                  </div>
-                </article>
+    <div className="manual-builder-actions">
+      <button
+        type="button"
+        className="add-day-button"
+        onClick={addManualDay}
+      >
+        <Plus size={18} />
+        Add another day
+      </button>
+
+      <button
+        type="button"
+        className="save-manual-button"
+        onClick={saveManualItinerary}
+        disabled={savingManualPlan}
+      >
+        {savingManualPlan ? (
+          <>
+            <LoaderCircle className="spin" size={18} />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Save size={18} />
+            Save manual itinerary
+          </>
+        )}
+      </button>
+    </div>
+  </div>
+) : itinerary.length === 0 ? (
+  <div className="empty-itinerary">
+    <Sparkles size={34} />
+    <h3>Your itinerary is waiting</h3>
+    <p>
+      Click “Generate AI itinerary” and TravelAI will create your
+      personalized day-wise plan. If AI is unavailable, you can build
+      your trip manually.
+    </p>
+  </div>
+) : (
+  <div className="itinerary-list">
+    {itinerary.map((day, index) => (
+      <article className="itinerary-day-card" key={index}>
+        <div className="day-number">Day {day.day || index + 1}</div>
+
+        <div>
+          <h3>{day.title || day.theme || `Day ${index + 1}`}</h3>
+
+          {day.activities?.length > 0 ? (
+            <ul>
+              {day.activities.map((activity, activityIndex) => (
+                <li key={activityIndex}>
+                  {typeof activity === "string"
+                    ? activity
+                    : activity.name || activity.description}
+                </li>
               ))}
-            </div>
+            </ul>
+          ) : (
+            <p>
+              {day.description ||
+                day.plan ||
+                "Your personalized activities will appear here."}
+            </p>
           )}
-        </section>
+        </div>
+      </article>
+    ))}
+  </div>
+)}
+</section>
 
         <section className="trip-content-card">
           <div className="section-heading">

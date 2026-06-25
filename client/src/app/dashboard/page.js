@@ -12,6 +12,8 @@ import {
   MapPinned,
   Plus,
   Sparkles,
+  Trash2,
+  X,
   Users,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -22,6 +24,8 @@ export default function DashboardPage() {
 
   const [trips, setTrips] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [tripToDelete, setTripToDelete] = useState(null);
+const [isDeleting, setIsDeleting] = useState(false);
 
   const loadTrips = async () => {
     try {
@@ -52,6 +56,44 @@ export default function DashboardPage() {
       toast.error("Could not log out");
     }
   };
+
+ const openDeleteModal = (trip, event) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  setTripToDelete(trip);
+};
+
+const closeDeleteModal = () => {
+  if (isDeleting) return;
+  setTripToDelete(null);
+};
+
+const deleteTrip = async () => {
+  if (!tripToDelete) return;
+
+  try {
+    setIsDeleting(true);
+
+    await api.delete(`/trips/${tripToDelete._id}`);
+
+    setTrips((currentTrips) =>
+      currentTrips.filter((trip) => trip._id !== tripToDelete._id)
+    );
+
+    toast.success("Trip deleted successfully");
+    setTripToDelete(null);
+  } catch (error) {
+    console.error(
+      "Delete trip error:",
+      error?.response?.data || error.message
+    );
+
+    toast.error(error?.response?.data?.message || "Could not delete trip");
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   return (
     <main className="dashboard-page">
@@ -162,44 +204,124 @@ export default function DashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="trip-grid">
-              {trips.map((trip) => (
-                <Link
-                  href={`/trips/${trip._id}`}
-                  key={trip._id}
-                  className="dashboard-trip-card"
-                >
-                  <div className="trip-card-top">
-                    <span className={`trip-status ${trip.status}`}>
-                      {trip.status === "generated" ? "AI itinerary ready" : "Planning"}
-                    </span>
-                    <ChevronRight size={20} />
-                  </div>
+           <div className="trip-grid">
+  {trips.map((trip) => (
+    <article className="dashboard-trip-card" key={trip._id}>
+      <div className="trip-card-top">
+        <span className={`trip-status ${trip.status}`}>
+          {trip.status === "generated"
+            ? "AI itinerary ready"
+            : trip.status === "manual"
+            ? "Manual plan"
+            : "Planning"}
+        </span>
 
-                  <h3>{trip.destination}</h3>
+        <div className="trip-card-actions">
+          <Link
+            href={`/trips/${trip._id}`}
+            className="open-trip-button"
+            aria-label={`Open trip to ${trip.destination}`}
+            title="Open trip"
+          >
+            <ChevronRight size={20} />
+          </Link>
 
-                  <div className="trip-card-meta">
-                    <span>
-                      <CalendarDays size={16} />
-                      {trip.numberOfDays} days
-                    </span>
-                    <span>
-                      <Users size={16} />
-                      {trip.travelers} travelers
-                    </span>
-                    <span>
-                      <CircleDollarSign size={16} />
-                      {trip.budget}
-                    </span>
-                  </div>
+          <button
+            type="button"
+            className="delete-trip-button"
+            onClick={(event) => openDeleteModal(trip, event)}
+            aria-label={`Delete trip to ${trip.destination}`}
+            title="Delete trip"
+          >
+            <Trash2 size={17} />
+          </button>
+        </div>
+      </div>
 
-                  <p>{trip.travelStyle} travel • {trip.interests?.join(", ")}</p>
-                </Link>
-              ))}
-            </div>
+      <Link
+        href={`/trips/${trip._id}`}
+        className="dashboard-trip-card-content"
+      >
+        <h3>{trip.destination}</h3>
+
+        <div className="trip-card-meta">
+          <span>
+            <CalendarDays size={16} />
+            {trip.numberOfDays} days
+          </span>
+
+          <span>
+            <Users size={16} />
+            {trip.travelers} travelers
+          </span>
+
+          <span>
+            <CircleDollarSign size={16} />
+            {trip.budget}
+          </span>
+        </div>
+
+        <p>
+          {trip.travelStyle} travel • {trip.interests?.join(", ")}
+        </p>
+      </Link>
+    </article>
+  ))}
+</div>
           )}
         </section>
       </section>
+      {tripToDelete && (
+  <div className="delete-modal-overlay" onClick={closeDeleteModal}>
+    <div
+      className="delete-modal"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="delete-modal-close"
+        onClick={closeDeleteModal}
+        disabled={isDeleting}
+        aria-label="Close delete confirmation"
+      >
+        <X size={20} />
+      </button>
+
+      <div className="delete-modal-icon">
+        <Trash2 size={27} />
+      </div>
+
+      <h2>Delete this trip?</h2>
+
+      <p>
+        Are you sure you want to delete your trip to{" "}
+        <strong>{tripToDelete.destination}</strong>?
+      </p>
+
+      <span>This action cannot be undone.</span>
+
+      <div className="delete-modal-actions">
+        <button
+          type="button"
+          className="cancel-delete-button"
+          onClick={closeDeleteModal}
+          disabled={isDeleting}
+        >
+          Keep trip
+        </button>
+
+        <button
+          type="button"
+          className="confirm-delete-button"
+          onClick={deleteTrip}
+          disabled={isDeleting}
+        >
+          {isDeleting ? "Deleting..." : "Yes, delete trip"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </main>
   );
 }

@@ -34,10 +34,10 @@ export default function HomePage() {
         <div className="hero-card">
           <div className="trip-card-header">
             <MapPinned size={24} />
-            <span>Upcoming trip</span>
+            <span>Sample AI trip</span>
           </div>
 
-          <h3>Goa Adventure</h3>
+          <h3>Goa,India</h3>
           <p>5 days • 2 travelers • Medium budget</p>
 
           <div className="mini-itinerary">
