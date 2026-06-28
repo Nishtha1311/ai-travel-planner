@@ -50,6 +50,7 @@ const tripSchema = new mongoose.Schema(
         "Solo",
         "Romantic",
         "Business",
+        "Relaxed",
       ],
       required: true,
     },
